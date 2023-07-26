@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Network Visualization with Leaflet and Fetch</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    #map {
+      height: 500px;
+    }
+    .custom-icon {
+      display: none;
+    }
+    .custom-tooltip {
+      background-color: red;
+      color: white;
+      border-radius: 50%;
+      padding: 2px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+    async function fetchDataAndInitializeMap() {
+      try {
+        const response = await fetch('./input/example.json');
+        const data = await response.json();
+        const nodes = data.nodes;
+        const connections = data.connections;
+
+        var map = L.map('map').setView([0, 0], 2);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        nodes.forEach(function(node) {
+          var tooltipContent = `<div class="custom-tooltip">${node.name}</div>`;
+          var marker = L.marker([node.lat, node.lng], { icon: L.divIcon({ className: 'custom-icon' }) }).addTo(map);
+          marker.bindTooltip(tooltipContent, { permanent: true, direction: 'center', className: 'custom-tooltip', offset: [0, 0] }).openTooltip();
+        });
+
+        connections.forEach(function(connection) {
+          var fromNode = nodes.find(node => node.id === connection.from);
+          var toNode = nodes.find(node => node.id === connection.to);
+
+          L.polyline([L.latLng(fromNode.lat, fromNode.lng), L.latLng(toNode.lat, toNode.lng)], { color: 'red', weight: connection.value / 10 }).addTo(map);
+        });
+      } catch (error) {
+        console.error('Error fetching or processing data:', error);
+      }
+    }
+
+    fetchDataAndInitializeMap();
+  </script>
+</body>
+</html>
